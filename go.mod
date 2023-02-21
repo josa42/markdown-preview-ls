@@ -15,3 +15,7 @@ require (
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
 	golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7 // indirect
 )
+
+replace (
+  github.com/josa42/go-ls => ../go-ls
+)

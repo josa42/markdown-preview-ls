@@ -16,13 +16,17 @@ func Run(ch control.Channels) {
 	s.VerboseLogging = true
 
 	s.Root.Initialize(Initialize)
+	s.Root.Shutdown(func(ctx ls.RequestContext) error {
+		go func() { ch.Close <- true }()
+		return nil
+	})
 
 	s.Workspace.ExecuteCommand(func(ctx ls.RequestContext, p lsp.ExecuteCommandParams) error {
 		switch p.Command {
 		case "openPreview":
-			ch.Open <- true
+			go func() { ch.Open <- true }()
 		case "closePreview":
-			ch.Open <- false
+			go func() { ch.Close <- true }()
 		}
 		return nil
 	})
@@ -51,8 +55,6 @@ func Run(ch control.Channels) {
 	})
 
 	s.Start()
-
-	ch.Started <- true
 
 	if err := s.Wait(); err != nil {
 		log.Printf("Server exited: %v", err)

@@ -42,51 +42,41 @@ var page = `
 </html>
 `
 
-func Run(ch control.Channels) {
-	for {
-		log.Println("wait")
-		open := <-ch.Open
-		if !open {
-			continue
+func Run(ch control.PreviewChannels) {
+
+	w := webview.New(true)
+	defer w.Destroy()
+	w.SetTitle("Basic Example")
+	w.SetSize(480, 320, webview.HintNone)
+
+	w.SetHtml(render("Loading..."))
+
+	go func() {
+		for {
+			text := <-ch.Update
+			log.Println("<- update")
+			w.SetHtml(render(text))
 		}
+	}()
+	go func() {
+		for {
+			<-ch.Close
+			log.Printf("<- close")
+			w.Terminate()
+		}
+	}()
 
-		w := webview.New(true)
-		defer w.Destroy()
-		w.SetTitle("Basic Example")
-		w.SetSize(480, 320, webview.HintNone)
+	w.Bind("__handleNavigation", func(link string) {
+		fmt.Printf("navigation: '%s'\n", link)
+		if strings.HasPrefix(link, "https://") || strings.HasPrefix(link, "http://") {
+			go exec.Command("open", link).Run()
+		}
+	})
 
-		w.SetHtml("Loading...")
-
-		go func() {
-			for {
-				text := <-ch.Update
-				log.Println("<- update")
-				w.SetHtml(fmt.Sprintf(page, "", render([]byte(text))))
-			}
-		}()
-		go func() {
-			for {
-				open := <-ch.Open
-				log.Printf("<- open %v", open)
-				if !open {
-					w.Destroy()
-				}
-			}
-		}()
-
-		w.Bind("__handleNavigation", func(link string) {
-			fmt.Printf("navigation: '%s'\n", link)
-			if strings.HasPrefix(link, "https://") || strings.HasPrefix(link, "http://") {
-				go exec.Command("open", link).Run()
-			}
-		})
-
-		w.Run()
-		log.Println("stopped")
-	}
+	w.Run()
 }
 
-func render(source []byte) string {
+func render(source string) string {
 	md := goldmark.New(
 		goldmark.WithExtensions(extension.GFM),
 		goldmark.WithParserOptions(
@@ -98,9 +88,9 @@ func render(source []byte) string {
 		),
 	)
 	var buf bytes.Buffer
-	if err := md.Convert(source, &buf); err != nil {
+	if err := md.Convert([]byte(source), &buf); err != nil {
 		panic(err)
 	}
 
-	return string(buf.Bytes())
+	return fmt.Sprintf(page, "", string(buf.Bytes()))
 }
