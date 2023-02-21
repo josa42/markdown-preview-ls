@@ -1,21 +1,62 @@
 package server
 
 import (
+	"context"
+	"encoding/json"
 	"log"
 
 	"github.com/josa42/go-ls"
-	"github.com/josa42/md-ls/control"
-	"github.com/josa42/md-ls/logger"
-	"github.com/sourcegraph/go-lsp"
+	"github.com/josa42/go-ls/lsp"
+	"github.com/josa42/markdown-preview-ls/control"
+	"github.com/josa42/markdown-preview-ls/logger"
 )
 
+const (
+	CMD_OPEN   = "mardown-preview.open"
+	CMD_UPDATE = "mardown-preview.update"
+	CMD_CLOSE  = "mardown-preview.close"
+)
+
+var currentURI lsp.DocumentURI
+
+func unmarshalUpdateParams(input interface{}) UpdateParams {
+	params := UpdateParams{}
+	jsonData, _ := json.Marshal(input)
+	json.Unmarshal(jsonData, &params)
+
+	return params
+}
+
+type UpdateParams struct {
+	TextDocument lsp.TextDocumentIdentifier `json:"textDocument"`
+}
+
 func Run(ch control.Channels) {
-	defer logger.Init("/tmp/md-ls.log")()
+	defer logger.Init("/tmp/markdown-preview-ls.log")()
 
 	s := ls.New()
 	s.VerboseLogging = true
 
-	s.Root.Initialize(Initialize)
+	s.State.OnChange(func(uri lsp.DocumentURI) {
+		if uri == currentURI {
+			text, _ := s.State.GetText(uri)
+			ch.Update <- text
+		}
+
+	})
+
+	s.Root.Initialize(func(s ls.Server, ctx context.Context, p lsp.InitializeParams) (lsp.InitializeResult, error) {
+		return lsp.InitializeResult{
+			Capabilities: lsp.ServerCapabilities{
+				TextDocumentSync: &lsp.TextDocumentSyncOptions{
+					OpenClose: true,
+					Change:    lsp.TDSKFull,
+				},
+				ExecuteCommandProvider: &lsp.ExecuteCommandOptions{Commands: []string{CMD_OPEN, CMD_UPDATE, CMD_CLOSE}},
+			},
+		}, nil
+	})
+
 	s.Root.Shutdown(func(ctx ls.RequestContext) error {
 		go func() { ch.Close <- true }()
 		return nil
@@ -23,29 +64,42 @@ func Run(ch control.Channels) {
 
 	s.Workspace.ExecuteCommand(func(ctx ls.RequestContext, p lsp.ExecuteCommandParams) error {
 		switch p.Command {
-		case "openPreview":
-			go func() { ch.Open <- true }()
-		case "closePreview":
+		case CMD_OPEN:
+			go func() {
+				if len(p.Arguments) == 1 {
+					params := unmarshalUpdateParams(p.Arguments[0])
+					currentURI = params.TextDocument.URI
+					text, _ := ctx.Server.State.GetText(params.TextDocument.URI)
+
+					ch.Open <- text
+				}
+			}()
+
+		case CMD_UPDATE:
+			go func() {
+				if len(p.Arguments) == 1 {
+					params := unmarshalUpdateParams(p.Arguments[0])
+					currentURI = params.TextDocument.URI
+					text, _ := ctx.Server.State.GetText(params.TextDocument.URI)
+
+					ch.Update <- text
+				}
+			}()
+
+		case CMD_CLOSE:
 			go func() { ch.Close <- true }()
 		}
+
 		return nil
 	})
 
 	s.TextDocument.DidOpen(func(ctx ls.RequestContext, p lsp.DidOpenTextDocumentParams) error {
 		ctx.Server.State.SetDocument(p.TextDocument)
-
-		text, _ := ctx.Server.State.GetText(p.TextDocument.URI)
-		ch.Update <- text
-
 		return nil
 	})
 
 	s.TextDocument.DidChange(func(ctx ls.RequestContext, p lsp.DidChangeTextDocumentParams) error {
 		ctx.Server.State.ApplyCanges(p.TextDocument.URI, p.ContentChanges)
-
-		text, _ := ctx.Server.State.GetText(p.TextDocument.URI)
-		ch.Update <- text
-
 		return nil
 	})
 

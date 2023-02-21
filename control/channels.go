@@ -1,7 +1,7 @@
 package control
 
 type Channels struct {
-	Open   chan bool
+	Open   chan string
 	Close  chan bool
 	Update chan string
 }

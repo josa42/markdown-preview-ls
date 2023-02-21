@@ -6,10 +6,10 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/josa42/md-ls/control"
-	"github.com/josa42/md-ls/preview"
-	"github.com/josa42/md-ls/previewserver"
-	"github.com/josa42/md-ls/server"
+	"github.com/josa42/markdown-preview-ls/control"
+	"github.com/josa42/markdown-preview-ls/preview"
+	"github.com/josa42/markdown-preview-ls/previewserver"
+	"github.com/josa42/markdown-preview-ls/server"
 )
 
 func main() {
@@ -20,7 +20,11 @@ func main() {
 
 	switch cmd {
 	case "preview":
-		runPreview()
+		text := ""
+		if len(os.Args) > 2 {
+			text = os.Args[2]
+		}
+		runPreview(text)
 	default:
 		runServer()
 	}
@@ -28,7 +32,7 @@ func main() {
 
 func runServer() {
 	ch := control.Channels{
-		Open:   make(chan bool),
+		Open:   make(chan string),
 		Close:  make(chan bool),
 		Update: make(chan string),
 	}
@@ -37,14 +41,17 @@ func runServer() {
 
 	go func() {
 		for {
-			<-ch.Open
+			text := <-ch.Open
 			if !previewIsOpen {
 				previewIsOpen = true
-				cmd := exec.Command(os.Args[0], "preview")
+				cmd := exec.Command(os.Args[0], "preview", text)
 				go func() {
 					cmd.Run()
 					previewIsOpen = false
 				}()
+			} else {
+				http.Post("http://localhost:3333/update", "text/plain", bytes.NewBufferString(text))
+
 			}
 		}
 	}()
@@ -67,7 +74,7 @@ func runServer() {
 	server.Run(ch)
 }
 
-func runPreview() {
+func runPreview(text string) {
 	ch := control.PreviewChannels{
 		Close:  make(chan bool),
 		Update: make(chan string),
@@ -75,6 +82,5 @@ func runPreview() {
 
 	go previewserver.Run(ch)
 
-	preview.Run(ch)
-
+	preview.Run(ch, text)
 }

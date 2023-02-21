@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/josa42/md-ls/control"
+	"github.com/josa42/markdown-preview-ls/control"
 )
 
 func Run(ch control.PreviewChannels) {

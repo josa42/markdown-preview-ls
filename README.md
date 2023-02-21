@@ -1,4 +1,6 @@
-# md-ls
+# markdown-preview-ls
+
+A markdown preview tool implementing the language server protocol.
 
 ## License
 

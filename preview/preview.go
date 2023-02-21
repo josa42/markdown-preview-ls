@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/josa42/md-ls/control"
+	"github.com/josa42/markdown-preview-ls/control"
 	"github.com/webview/webview"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
@@ -42,14 +42,14 @@ var page = `
 </html>
 `
 
-func Run(ch control.PreviewChannels) {
+func Run(ch control.PreviewChannels, initialText string) {
 
 	w := webview.New(true)
 	defer w.Destroy()
 	w.SetTitle("Basic Example")
 	w.SetSize(480, 320, webview.HintNone)
 
-	w.SetHtml(render("Loading..."))
+	w.SetHtml(render(initialText))
 
 	go func() {
 		for {
