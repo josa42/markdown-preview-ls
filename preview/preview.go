@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/josa42/md-ls/control"
 	"github.com/webview/webview"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
@@ -41,11 +42,11 @@ var page = `
 </html>
 `
 
-func Run(textUpdate chan string, run chan bool) {
+func Run(ch control.Channels) {
 	for {
 		log.Println("wait")
-		start := <-run
-		if !start {
+		open := <-ch.Open
+		if !open {
 			continue
 		}
 
@@ -58,17 +59,17 @@ func Run(textUpdate chan string, run chan bool) {
 
 		go func() {
 			for {
-				text := <-textUpdate
+				text := <-ch.Update
 				log.Println("<- update")
 				w.SetHtml(fmt.Sprintf(page, "", render([]byte(text))))
 			}
 		}()
 		go func() {
 			for {
-				start := <-run
-				log.Println("<- run %v", start)
-				if !start {
-					w.Terminate()
+				open := <-ch.Open
+				log.Printf("<- open %v", open)
+				if !open {
+					w.Destroy()
 				}
 			}
 		}()

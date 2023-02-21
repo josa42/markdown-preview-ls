@@ -4,11 +4,12 @@ import (
 	"log"
 
 	"github.com/josa42/go-ls"
+	"github.com/josa42/md-ls/control"
 	"github.com/josa42/md-ls/logger"
 	"github.com/sourcegraph/go-lsp"
 )
 
-func Run(preview func(txt string)) {
+func Run(ch control.Channels) {
 	defer logger.Init("/tmp/md-ls.log")()
 
 	s := ls.New()
@@ -16,11 +17,21 @@ func Run(preview func(txt string)) {
 
 	s.Root.Initialize(Initialize)
 
+	s.Workspace.ExecuteCommand(func(ctx ls.RequestContext, p lsp.ExecuteCommandParams) error {
+		switch p.Command {
+		case "openPreview":
+			ch.Open <- true
+		case "closePreview":
+			ch.Open <- false
+		}
+		return nil
+	})
+
 	s.TextDocument.DidOpen(func(ctx ls.RequestContext, p lsp.DidOpenTextDocumentParams) error {
 		ctx.Server.State.SetDocument(p.TextDocument)
 
 		text, _ := ctx.Server.State.GetText(p.TextDocument.URI)
-		preview(text)
+		ch.Update <- text
 
 		return nil
 	})
@@ -29,7 +40,7 @@ func Run(preview func(txt string)) {
 		ctx.Server.State.ApplyCanges(p.TextDocument.URI, p.ContentChanges)
 
 		text, _ := ctx.Server.State.GetText(p.TextDocument.URI)
-		preview(text)
+		ch.Update <- text
 
 		return nil
 	})
@@ -39,7 +50,11 @@ func Run(preview func(txt string)) {
 		return nil
 	})
 
-	if err := s.StartAndWait(); err != nil {
+	s.Start()
+
+	ch.Started <- true
+
+	if err := s.Wait(); err != nil {
 		log.Printf("Server exited: %v", err)
 	}
 }

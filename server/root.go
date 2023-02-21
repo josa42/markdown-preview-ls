@@ -26,6 +26,7 @@ func Initialize(s ls.Server, ctx context.Context, p lsp.InitializeParams) (lsp.I
 			HoverProvider:              true,
 			DocumentSymbolProvider:     true,
 			FoldingRangeProvider:       true,
+			ExecuteCommandProvider:     &golsp.ExecuteCommandOptions{Commands: []string{"openPreview", "closePreview"}},
 			// DocumentHighlightProvider:  true,
 			// SignatureHelpProvider: &lsp.SignatureHelpOptions{
 			// 	TriggerCharacters: []string{},

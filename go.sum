@@ -11,6 +11,8 @@ github.com/google/go-cmp v0.3.1/go.mod h1:8QqcDgzrUqlUb/G2PQTWiueGozuR1884gddMyw
 github.com/google/martian v2.1.0+incompatible/go.mod h1:9I4somxYTbIHy5NJKHRl3wXiIaQGbYVAs8BPL6v8lEs=
 github.com/josa42/go-ls v0.0.0-20191215233959-178508e85a1b h1:cxuy1MOn4KhTVKjhdGuMxzG8idkMnns0/oSwZ3DZBCI=
 github.com/josa42/go-ls v0.0.0-20191215233959-178508e85a1b/go.mod h1:qdqiucU20+pWmScWzi84XCXx21c0zfO320L+mQrtXXc=
+github.com/josa42/go-ls v0.0.0-20220605165229-063fde83b2a6 h1:qT6D29IZq8Af7mfpSQ5FI03ReZZQEczDtnj6LtD6A3I=
+github.com/josa42/go-ls v0.0.0-20220605165229-063fde83b2a6/go.mod h1:qdqiucU20+pWmScWzi84XCXx21c0zfO320L+mQrtXXc=
 github.com/josa42/go-stringutils v0.0.0-20170113134240-f91a1ffacf98/go.mod h1:3bP4qKlpCFsamwnOCNsQ4fdfGIigLWZU4Xwf6Rw+MsY=
 github.com/kevinburke/ssh_config v0.0.0-20190725054713-01f96b0aa0cd/go.mod h1:CT57kijsi8u/K/BOFA39wgDQJ9CxiF4nAY/ojJ6r6mM=
 github.com/sourcegraph/go-lsp v0.0.0-20181119182933-0c7d621186c1 h1:O1d7nVzpGmP5pGAZBSlp9TSpjNwwI0xThxhPd9oVJuU=
