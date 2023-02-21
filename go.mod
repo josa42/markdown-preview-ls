@@ -3,7 +3,7 @@ module github.com/josa42/markdown-preview-ls
 go 1.19
 
 require (
-	github.com/josa42/go-ls v0.1.0
+	github.com/josa42/go-ls v0.0.0-20230221152546-4f6e4f0b66c3
 	github.com/webview/webview v0.0.0-20230210061304-7b40e46d97e9
 	github.com/yuin/goldmark v1.5.4
 )

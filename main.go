@@ -23,16 +23,16 @@ func main() {
 
 	switch cmd {
 	case "preview":
-		text := ""
+		source := ""
 		port := 0
 		if len(os.Args) > 2 {
-			text = os.Args[2]
+			source = os.Args[2]
 		}
 		if len(os.Args) > 3 {
 			port, _ = strconv.Atoi(os.Args[3])
 		}
 
-		runPreview(port, text)
+		runPreview(port, source)
 	default:
 		runServer()
 	}
@@ -45,7 +45,6 @@ func runServer() {
 		Update: make(chan string),
 	}
 
-	previewIsOpen := false
 	previewPort := 0
 
 	url := func(path string) string {
@@ -55,13 +54,12 @@ func runServer() {
 	go func() {
 		for {
 			text := <-ch.Open
-			if !previewIsOpen {
-				previewIsOpen = true
+			if previewPort == 0 {
 				previewPort, _ = ports.GetFreePort()
 				cmd := exec.Command(os.Args[0], "preview", text, fmt.Sprintf("%d", previewPort))
 				go func() {
 					cmd.Run()
-					previewIsOpen = false
+					previewPort = 0
 				}()
 			} else {
 				http.Post(url("update"), "text/plain", bytes.NewBufferString(text))
@@ -72,7 +70,7 @@ func runServer() {
 	go func() {
 		for {
 			<-ch.Close
-			if previewIsOpen {
+			if previewPort > 0 {
 				http.Post(url("close"), "text/plain", nil)
 			}
 		}
@@ -88,7 +86,7 @@ func runServer() {
 	server.Run(ch)
 }
 
-func runPreview(port int, text string) {
+func runPreview(port int, initialSource string) {
 	ch := control.PreviewChannels{
 		Close:  make(chan bool),
 		Update: make(chan string),
@@ -96,5 +94,5 @@ func runPreview(port int, text string) {
 
 	go previewserver.Run(port, ch)
 
-	preview.Run(ch, text)
+	preview.Run(ch, initialSource)
 }
