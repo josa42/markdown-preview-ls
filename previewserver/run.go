@@ -1,6 +1,7 @@
 package previewserver
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -8,7 +9,7 @@ import (
 	"github.com/josa42/markdown-preview-ls/control"
 )
 
-func Run(ch control.PreviewChannels) {
+func Run(port int, ch control.PreviewChannels) {
 
 	http.HandleFunc("/close", func(w http.ResponseWriter, r *http.Request) {
 		ch.Close <- true
@@ -22,5 +23,5 @@ func Run(ch control.PreviewChannels) {
 		io.WriteString(w, "ok")
 	})
 
-	http.ListenAndServe("localhost:3333", nil)
+	http.ListenAndServe(fmt.Sprintf("localhost:%d", port), nil)
 }

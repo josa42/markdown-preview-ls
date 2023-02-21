@@ -2,11 +2,14 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"net/http"
 	"os"
 	"os/exec"
+	"strconv"
 
 	"github.com/josa42/markdown-preview-ls/control"
+	"github.com/josa42/markdown-preview-ls/ports"
 	"github.com/josa42/markdown-preview-ls/preview"
 	"github.com/josa42/markdown-preview-ls/previewserver"
 	"github.com/josa42/markdown-preview-ls/server"
@@ -21,10 +24,15 @@ func main() {
 	switch cmd {
 	case "preview":
 		text := ""
+		port := 0
 		if len(os.Args) > 2 {
 			text = os.Args[2]
 		}
-		runPreview(text)
+		if len(os.Args) > 3 {
+			port, _ = strconv.Atoi(os.Args[3])
+		}
+
+		runPreview(port, text)
 	default:
 		runServer()
 	}
@@ -38,19 +46,25 @@ func runServer() {
 	}
 
 	previewIsOpen := false
+	previewPort := 0
+
+	url := func(path string) string {
+		return fmt.Sprintf("http://localhost:%d/%s", previewPort, path)
+	}
 
 	go func() {
 		for {
 			text := <-ch.Open
 			if !previewIsOpen {
 				previewIsOpen = true
-				cmd := exec.Command(os.Args[0], "preview", text)
+				previewPort, _ = ports.GetFreePort()
+				cmd := exec.Command(os.Args[0], "preview", text, fmt.Sprintf("%d", previewPort))
 				go func() {
 					cmd.Run()
 					previewIsOpen = false
 				}()
 			} else {
-				http.Post("http://localhost:3333/update", "text/plain", bytes.NewBufferString(text))
+				http.Post(url("update"), "text/plain", bytes.NewBufferString(text))
 
 			}
 		}
@@ -59,7 +73,7 @@ func runServer() {
 		for {
 			<-ch.Close
 			if previewIsOpen {
-				http.Post("http://localhost:3333/close", "text/plain", nil)
+				http.Post(url("close"), "text/plain", nil)
 			}
 		}
 	}()
@@ -67,20 +81,20 @@ func runServer() {
 	go func() {
 		for {
 			text := <-ch.Update
-			http.Post("http://localhost:3333/update", "text/plain", bytes.NewBufferString(text))
+			http.Post(url("update"), "text/plain", bytes.NewBufferString(text))
 		}
 	}()
 
 	server.Run(ch)
 }
 
-func runPreview(text string) {
+func runPreview(port int, text string) {
 	ch := control.PreviewChannels{
 		Close:  make(chan bool),
 		Update: make(chan string),
 	}
 
-	go previewserver.Run(ch)
+	go previewserver.Run(port, ch)
 
 	preview.Run(ch, text)
 }
