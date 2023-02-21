@@ -3,14 +3,10 @@ package preview
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 
-	"github.com/fsnotify/fsnotify"
 	"github.com/webview/webview"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
@@ -43,79 +39,50 @@ var page = `
 	</head>
 	<body class="markdown-body">%s</body>
 </html>
-
 `
 
-func Run() {
-	currentFileName := "README.md"
-
-	w := webview.New(true)
-	defer w.Destroy()
-	w.SetTitle("Basic Example")
-	w.SetSize(480, 320, webview.HintNone)
-
-	update := func() {
-		c, _ := ioutil.ReadFile(currentFileName)
-		w.SetHtml(fmt.Sprintf(page, currentFileName, render(c)))
-	}
-
-	go watch(func(fileName string) {
-		if fileName == currentFileName {
-			update()
+func Run(textUpdate chan string, run chan bool) {
+	for {
+		log.Println("wait")
+		start := <-run
+		if !start {
+			continue
 		}
-	})
 
-	w.Bind("__handleNavigation", func(link string) {
-		fmt.Printf("navigation: '%s'\n", link)
-		if strings.HasPrefix(link, "https://") || strings.HasPrefix(link, "http://") {
-			go exec.Command("open", link).Run()
-		} else if _, err := os.Stat(link); err == nil {
-			currentFileName = filepath.Clean(link)
-			update()
-		}
-	})
+		w := webview.New(true)
+		defer w.Destroy()
+		w.SetTitle("Basic Example")
+		w.SetSize(480, 320, webview.HintNone)
 
-	update()
+		w.SetHtml("Loading...")
 
-	w.Run()
-}
-
-func watch(fn func(fileName string)) {
-	// Create new watcher.
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer watcher.Close()
-
-	// Start listening for events.
-	go func() {
-		for {
-			select {
-			case event, ok := <-watcher.Events:
-				if !ok {
-					return
-				}
-				log.Println("event:", event)
-				fn(event.Name)
-
-			case err, ok := <-watcher.Errors:
-				if !ok {
-					return
-				}
-				log.Println("error:", err)
+		go func() {
+			for {
+				text := <-textUpdate
+				log.Println("<- update")
+				w.SetHtml(fmt.Sprintf(page, "", render([]byte(text))))
 			}
-		}
-	}()
+		}()
+		go func() {
+			for {
+				start := <-run
+				log.Println("<- run %v", start)
+				if !start {
+					w.Terminate()
+				}
+			}
+		}()
 
-	// Add a path.
-	err = watcher.Add(".")
-	if err != nil {
-		log.Fatal(err)
+		w.Bind("__handleNavigation", func(link string) {
+			fmt.Printf("navigation: '%s'\n", link)
+			if strings.HasPrefix(link, "https://") || strings.HasPrefix(link, "http://") {
+				go exec.Command("open", link).Run()
+			}
+		})
+
+		w.Run()
+		log.Println("stopped")
 	}
-
-	// Block main goroutine forever.
-	<-make(chan struct{})
 }
 
 func render(source []byte) string {
