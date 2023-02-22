@@ -11,8 +11,10 @@ require (
 require (
 	github.com/creachadair/jrpc2 v0.44.0 // indirect
 	github.com/yuin/goldmark-emoji v1.0.1 // indirect
+	github.com/yuin/goldmark-meta v1.1.0 // indirect
 	go.abhg.dev/goldmark/mermaid v0.3.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
+	gopkg.in/yaml.v2 v2.3.0 // indirect
 )
 
 // replace github.com/josa42/go-ls => ../go-ls
