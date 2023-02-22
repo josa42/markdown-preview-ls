@@ -10,8 +10,7 @@ import (
 	"github.com/webview/webview"
 )
 
-func Run(ch control.PreviewChannels, port int, initialFile control.File) {
-
+func runWebView(ch control.PreviewChannels, port int, initialFile control.File) {
 	w := webview.New(true)
 	defer w.Destroy()
 	w.SetSize(480, 320, webview.HintNone)

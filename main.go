@@ -13,7 +13,6 @@ import (
 	"github.com/josa42/markdown-preview-ls/logger"
 	"github.com/josa42/markdown-preview-ls/ports"
 	"github.com/josa42/markdown-preview-ls/preview"
-	"github.com/josa42/markdown-preview-ls/previewserver"
 	"github.com/josa42/markdown-preview-ls/server"
 )
 
@@ -67,7 +66,7 @@ func runServer() {
 				}()
 			} else {
 				res, _ := json.Marshal(file)
-				http.Post(url(previewserver.UpdateCommand), "application/json", bytes.NewBuffer(res))
+				http.Post(url(preview.UpdateCommand), "application/json", bytes.NewBuffer(res))
 
 			}
 		}
@@ -76,7 +75,7 @@ func runServer() {
 		for {
 			<-ch.Close
 			if previewPort > 0 {
-				http.Post(url(previewserver.CloseCommand), "text/plain", nil)
+				http.Post(url(preview.CloseCommand), "text/plain", nil)
 			}
 		}
 	}()
@@ -85,7 +84,7 @@ func runServer() {
 		for {
 			file := <-ch.Update
 			res, _ := json.Marshal(file)
-			http.Post(url(previewserver.UpdateCommand), "application/json", bytes.NewBuffer(res))
+			http.Post(url(preview.UpdateCommand), "application/json", bytes.NewBuffer(res))
 		}
 	}()
 
@@ -94,9 +93,6 @@ func runServer() {
 
 func runPreview(port int, initialFile control.File) {
 	defer logger.Init("/tmp/markdown-preview-ls.preview.log")()
-	ch := control.NewPreviewChannels()
 
-	go previewserver.Run(ch, port, initialFile.Source)
-
-	preview.Run(ch, port, initialFile)
+	preview.Run(port, initialFile)
 }

@@ -1,4 +1,4 @@
-package previewserver
+package preview
 
 import (
 	"encoding/json"
@@ -19,9 +19,9 @@ const (
 
 var htmlExpr = regexp.MustCompile(`\.html$`)
 
-func Run(ch control.PreviewChannels, port int, initialSource string) {
+func runServer(ch control.PreviewChannels, port int, initialFile control.File) {
 
-	currentFile := control.File{Source: initialSource}
+	currentFile := initialFile
 	assetsServer := http.FileServer(http.Dir("."))
 
 	http.HandleFunc(CloseCommand, func(w http.ResponseWriter, r *http.Request) {
