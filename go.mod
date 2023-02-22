@@ -10,6 +10,7 @@ require (
 
 require (
 	github.com/creachadair/jrpc2 v0.44.0 // indirect
+	go.abhg.dev/goldmark/mermaid v0.3.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
 )
 

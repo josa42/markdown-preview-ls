@@ -12,5 +12,7 @@ github.com/webview/webview v0.0.0-20230210061304-7b40e46d97e9 h1:SPyWnfToUom3xNh
 github.com/webview/webview v0.0.0-20230210061304-7b40e46d97e9/go.mod h1:rpXAuuHgyEJb6kXcXldlkOjU6y4x+YcASKKXJNUhh0Y=
 github.com/yuin/goldmark v1.5.4 h1:2uY/xC0roWy8IBEGLgB1ywIoEJFGmRrX21YQcvGZzjU=
 github.com/yuin/goldmark v1.5.4/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
+go.abhg.dev/goldmark/mermaid v0.3.0 h1:bFuCc3+7orHQN1yZC5gY9CmaSli/h5ZgHaIk24LF17c=
+go.abhg.dev/goldmark/mermaid v0.3.0/go.mod h1:L5SiQ7PedPuZY0+zaPoJ5ZnDitIYS0Obi5w7Pf02tPY=
 golang.org/x/sync v0.1.0 h1:wsuoTGHzEhffawBOhz5CYhcrV4IdKZbEyZjBMuTp12o=
 golang.org/x/sync v0.1.0/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=

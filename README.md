@@ -4,6 +4,14 @@ A markdown preview tool implementing the language server protocol.
 
 ![screenshot](.github/assets/screenshot.jpg)
 
+```mermaid
+  graph TD;
+      A-->B;
+      A-->C;
+      B-->D;
+      C-->D;
+```
+
 <br><br>
 
 ## neovim setup
@@ -66,6 +74,13 @@ vim.api.nvim_create_autocmd('BufEnter', {
   command = 'silent! UpdatePreview',
 })
 ```
+
+<br><br>
+
+
+## TODOs
+
+- Scrolling
 
 <br><br>
 

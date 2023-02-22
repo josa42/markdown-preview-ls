@@ -8,6 +8,7 @@ import (
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
 	"github.com/yuin/goldmark/renderer/html"
+	"go.abhg.dev/goldmark/mermaid"
 )
 
 var page = `
@@ -15,7 +16,7 @@ var page = `
 <html>
 	<head>
 		<title>%s</title>
-	  <base target="_blank" />
+		<base target="_blank" />
 
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css" integrity="sha512-Ya9H+OPj8NgcQk34nCrbehaA0atbzGdZCI2uCbqVRELgnlrh8vQ2INMnkadVMSniC54HChLIh5htabVuKJww8g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 		<style>
@@ -46,7 +47,7 @@ var page = `
 
 func Body(source string) string {
 	md := goldmark.New(
-		goldmark.WithExtensions(extension.GFM, extension.Footnote),
+		goldmark.WithExtensions(extension.GFM, extension.Footnote, &mermaid.Extender{}),
 		goldmark.WithParserOptions(
 			parser.WithAutoHeadingID(),
 		),
