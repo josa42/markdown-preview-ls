@@ -1,6 +1,7 @@
 package preview
 
 import (
+	"fmt"
 	"os/exec"
 	"strings"
 
@@ -9,20 +10,34 @@ import (
 	"github.com/webview/webview"
 )
 
-func Run(ch control.PreviewChannels, initialSource string) {
+func Run(ch control.PreviewChannels, port int, initialFile control.File) {
 
 	w := webview.New(true)
 	defer w.Destroy()
-	w.SetTitle("Markdown Preview")
 	w.SetSize(480, 320, webview.HintNone)
-	w.SetHtml(render.Page(initialSource))
 
-	currentSource := initialSource
+	currentFile := control.File{}
+
+	update := func(file control.File) {
+		if currentFile.FilePath != file.FilePath {
+			currentFile = file
+			relPath := file.RelFilePath()
+			w.Dispatch(func() {
+				w.SetTitle(relPath)
+				w.Navigate(fmt.Sprintf("http://localhost:%d/%s.html", port, relPath))
+			})
+		} else {
+			currentFile = file
+			w.Eval("__update()")
+		}
+	}
+
+	update(initialFile)
 
 	go func() {
 		for {
-			currentSource = <-ch.Update
-			w.Eval("__update()")
+			file := <-ch.Update
+			update(file)
 		}
 	}()
 	go func() {
@@ -39,7 +54,7 @@ func Run(ch control.PreviewChannels, initialSource string) {
 	})
 
 	w.Bind("__getText", func() string {
-		return render.Body(currentSource)
+		return render.Body(currentFile.Source)
 	})
 
 	w.Run()

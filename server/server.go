@@ -8,7 +8,6 @@ import (
 	"github.com/josa42/go-ls"
 	"github.com/josa42/go-ls/lsp"
 	"github.com/josa42/markdown-preview-ls/control"
-	"github.com/josa42/markdown-preview-ls/logger"
 )
 
 const (
@@ -32,15 +31,13 @@ type UpdateParams struct {
 }
 
 func Run(ch control.Channels) {
-	defer logger.Init("/tmp/markdown-preview-ls.log")()
-
 	s := ls.New()
 	s.VerboseLogging = true
 
 	s.State.OnChange(func(uri lsp.DocumentURI) {
 		if uri == currentURI {
 			text, _ := s.State.GetText(uri)
-			ch.Update <- text
+			ch.Update <- control.NewFile(string(uri), text)
 		}
 
 	})
@@ -71,7 +68,7 @@ func Run(ch control.Channels) {
 					currentURI = params.TextDocument.URI
 					text, _ := ctx.Server.State.GetText(params.TextDocument.URI)
 
-					ch.Open <- text
+					ch.Open <- control.NewFile(string(currentURI), text)
 				}
 			}()
 
@@ -82,7 +79,7 @@ func Run(ch control.Channels) {
 					currentURI = params.TextDocument.URI
 					text, _ := ctx.Server.State.GetText(params.TextDocument.URI)
 
-					ch.Update <- text
+					ch.Update <- control.NewFile(string(currentURI), text)
 				}
 			}()
 

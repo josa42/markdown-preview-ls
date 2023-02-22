@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -9,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/josa42/markdown-preview-ls/control"
+	"github.com/josa42/markdown-preview-ls/logger"
 	"github.com/josa42/markdown-preview-ls/ports"
 	"github.com/josa42/markdown-preview-ls/preview"
 	"github.com/josa42/markdown-preview-ls/previewserver"
@@ -23,46 +25,49 @@ func main() {
 
 	switch cmd {
 	case "preview":
-		source := ""
+		// TODO CLI based on flag options
 		port := 0
+		filePath := ""
+		source := ""
 		if len(os.Args) > 2 {
-			source = os.Args[2]
+			filePath = os.Args[2]
 		}
 		if len(os.Args) > 3 {
-			port, _ = strconv.Atoi(os.Args[3])
+			source = os.Args[3]
+		}
+		if len(os.Args) > 4 {
+			port, _ = strconv.Atoi(os.Args[4])
 		}
 
-		runPreview(port, source)
+		runPreview(port, control.NewFile(filePath, source))
 	default:
 		runServer()
 	}
 }
 
 func runServer() {
-	ch := control.Channels{
-		Open:   make(chan string),
-		Close:  make(chan bool),
-		Update: make(chan string),
-	}
+	defer logger.Init("/tmp/markdown-preview-ls.log")()
+	ch := control.NewChannels()
 
 	previewPort := 0
 
 	url := func(path string) string {
-		return fmt.Sprintf("http://localhost:%d/%s", previewPort, path)
+		return fmt.Sprintf("http://localhost:%d%s", previewPort, path)
 	}
 
 	go func() {
 		for {
-			text := <-ch.Open
+			file := <-ch.Open
 			if previewPort == 0 {
 				previewPort, _ = ports.GetFreePort()
-				cmd := exec.Command(os.Args[0], "preview", text, fmt.Sprintf("%d", previewPort))
+				cmd := exec.Command(os.Args[0], "preview", file.FilePath, file.Source, fmt.Sprintf("%d", previewPort))
 				go func() {
 					cmd.Run()
 					previewPort = 0
 				}()
 			} else {
-				http.Post(url("update"), "text/plain", bytes.NewBufferString(text))
+				res, _ := json.Marshal(file)
+				http.Post(url(previewserver.UpdateCommand), "application/json", bytes.NewBuffer(res))
 
 			}
 		}
@@ -71,28 +76,27 @@ func runServer() {
 		for {
 			<-ch.Close
 			if previewPort > 0 {
-				http.Post(url("close"), "text/plain", nil)
+				http.Post(url(previewserver.CloseCommand), "text/plain", nil)
 			}
 		}
 	}()
 
 	go func() {
 		for {
-			text := <-ch.Update
-			http.Post(url("update"), "text/plain", bytes.NewBufferString(text))
+			file := <-ch.Update
+			res, _ := json.Marshal(file)
+			http.Post(url(previewserver.UpdateCommand), "application/json", bytes.NewBuffer(res))
 		}
 	}()
 
 	server.Run(ch)
 }
 
-func runPreview(port int, initialSource string) {
-	ch := control.PreviewChannels{
-		Close:  make(chan bool),
-		Update: make(chan string),
-	}
+func runPreview(port int, initialFile control.File) {
+	defer logger.Init("/tmp/markdown-preview-ls.preview.log")()
+	ch := control.NewPreviewChannels()
 
-	go previewserver.Run(port, ch)
+	go previewserver.Run(ch, port, initialFile.Source)
 
-	preview.Run(ch, initialSource)
+	preview.Run(ch, port, initialFile)
 }

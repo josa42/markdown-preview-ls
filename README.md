@@ -53,7 +53,7 @@ return {
 
 `init.lua`
 ```lua
-require('lspconfig')markdown_preview_ls.setup({})
+require('lspconfig').markdown_preview_ls.setup({})
 ```
 
 <br>
