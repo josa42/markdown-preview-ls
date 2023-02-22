@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/yuin/goldmark"
+	emoji "github.com/yuin/goldmark-emoji"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
 	"github.com/yuin/goldmark/renderer/html"
@@ -47,7 +48,8 @@ var page = `
 
 func Body(source string) string {
 	md := goldmark.New(
-		goldmark.WithExtensions(extension.GFM, extension.Footnote, &mermaid.Extender{}),
+		goldmark.WithExtensions(extension.GFM, extension.Footnote, &mermaid.Extender{}, emoji.Emoji),
+
 		goldmark.WithParserOptions(
 			parser.WithAutoHeadingID(),
 		),
