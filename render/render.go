@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"fmt"
 
+	chromehtml "github.com/alecthomas/chroma/v2/formatters/html"
 	"github.com/yuin/goldmark"
 	emoji "github.com/yuin/goldmark-emoji"
+	highlighting "github.com/yuin/goldmark-highlighting/v2"
 	meta "github.com/yuin/goldmark-meta"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
@@ -26,6 +28,16 @@ var page = `
 				max-width: 830px;
 				margin: 10px 20px;
 			}
+			:root {
+				--pre-background-color: rgb(246, 248, 250);
+			}
+			@media (prefers-color-scheme: dark) {
+				:root {
+					--pre-background-color: rgb(22, 27, 34);
+				}
+			}
+			pre { background-color: var(--pre-background-color) !important; }
+
 		</style>
 		<script>
 		  function __preventNavigation() {
@@ -55,6 +67,13 @@ func Body(source string) string {
 			&mermaid.Extender{},
 			emoji.Emoji,
 			meta.New(meta.WithTable()),
+			highlighting.NewHighlighting(
+				// highlighting.WithStyle("github-dark"),
+				highlighting.WithStyle("onedark"),
+				highlighting.WithFormatOptions(
+					chromehtml.WithLineNumbers(true),
+				),
+			),
 		),
 
 		goldmark.WithParserOptions(
