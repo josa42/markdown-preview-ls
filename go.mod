@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/alecthomas/chroma/v2 v2.5.0
-	github.com/josa42/go-ls v0.1.0
+	github.com/josa42/go-ls v0.2.0
 	github.com/webview/webview v0.0.0-20230210061304-7b40e46d97e9
 	github.com/yuin/goldmark v1.5.4
 	github.com/yuin/goldmark-emoji v1.0.1
@@ -20,4 +20,4 @@ require (
 	gopkg.in/yaml.v2 v2.3.0 // indirect
 )
 
-// replace github.com/josa42/go-ls => ../go-ls
+replace github.com/josa42/go-ls => ../go-ls
