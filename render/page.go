@@ -22,7 +22,6 @@ var page = `
 				}
 			}
 			pre { background-color: var(--pre-background-color) !important; }
-
 		</style>
 		<script>
 		  function __preventNavigation() {
@@ -36,6 +35,12 @@ var page = `
 		async function __update() {
 			document.querySelector('body').innerHTML = await __getText()
 			__preventNavigation()
+		}
+		async function __scroll(pos) {
+			window.scroll({
+				top: (document.documentElement.scrollHeight - document.documentElement.clientHeight) * pos,
+				behavior: 'smooth'
+			});
 		}
 		window.onload = () => __preventNavigation()
 		</script>

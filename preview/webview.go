@@ -31,12 +31,22 @@ func runWebView(ch control.PreviewChannels, port int, initialFile control.File) 
 		}
 	}
 
+	scroll := func(position control.ScrollPosition) {
+		w.Eval(fmt.Sprintf("__scroll(%f)", position.Position))
+	}
+
 	update(initialFile)
 
 	go func() {
 		for {
 			file := <-ch.Update
 			update(file)
+		}
+	}()
+	go func() {
+		for {
+			position := <-ch.Scroll
+			scroll(position)
 		}
 	}()
 	go func() {

@@ -14,12 +14,18 @@ const (
 	CMD_OPEN   = "mardown-preview.open"
 	CMD_UPDATE = "mardown-preview.update"
 	CMD_CLOSE  = "mardown-preview.close"
+	CMD_SCROLL = "mardown-preview.scroll"
 )
 
 var currentURI lsp.DocumentURI
 
 type UpdateParams struct {
 	TextDocument lsp.TextDocumentIdentifier `json:"textDocument"`
+}
+
+type ScrollParams struct {
+	TextDocument lsp.TextDocumentIdentifier `json:"textDocument"`
+	Position     float32                    `json:"position"`
 }
 
 func Run(ch control.Channels) {
@@ -70,6 +76,20 @@ func Run(ch control.Channels) {
 
 	s.Workspace.RegisterCommand(CMD_CLOSE, func(ctx ls.RequestContext, args []interface{}) error {
 		go func() { ch.Close <- true }()
+
+		return nil
+	})
+
+	s.Workspace.RegisterCommand(CMD_SCROLL, func(ctx ls.RequestContext, args []interface{}) error {
+		if len(args) != 1 {
+			return errors.New("argument is required")
+		}
+
+		params, _ := utils.Unmarkshal[ScrollParams](args[0])
+
+		if currentURI == params.TextDocument.URI {
+			ch.Scroll <- control.NewScrollPosition(string(currentURI), params.Position)
+		}
 
 		return nil
 	})

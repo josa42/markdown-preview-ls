@@ -38,6 +38,13 @@ func (p Client) Update(file control.File) {
 	}
 }
 
+func (p Client) Scroll(position control.ScrollPosition) {
+	if p.IsRunning() {
+		res, _ := json.Marshal(position)
+		http.Post(p.url(ScrollCommand), "application/json", bytes.NewBuffer(res))
+	}
+}
+
 func (p Client) Close() {
 	if p.IsRunning() {
 		http.Post(p.url(CloseCommand), "text/plain", nil)

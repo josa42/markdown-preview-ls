@@ -63,6 +63,13 @@ func runServer() {
 
 	go func() {
 		for {
+			position := <-ch.Scroll
+			client.Scroll(position)
+		}
+	}()
+
+	go func() {
+		for {
 			file := <-ch.Update
 			client.Update(file)
 		}

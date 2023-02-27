@@ -14,6 +14,7 @@ import (
 
 const (
 	UpdateCommand = "/____api____/update"
+	ScrollCommand = "/____api____/scroll"
 	CloseCommand  = "/____api____/close"
 )
 
@@ -27,6 +28,21 @@ func runServer(ch control.PreviewChannels, port int, initialFile control.File) {
 	http.HandleFunc(CloseCommand, func(w http.ResponseWriter, r *http.Request) {
 		ch.Close <- true
 		io.WriteString(w, "ok")
+	})
+
+	http.HandleFunc(ScrollCommand, func(w http.ResponseWriter, r *http.Request) {
+		body, _ := ioutil.ReadAll(r.Body)
+
+		position := control.ScrollPosition{}
+		json.Unmarshal(body, &position)
+
+		if currentFile.FilePath == position.FilePath {
+			ch.Scroll <- position
+
+			io.WriteString(w, "ok")
+		} else {
+			io.WriteString(w, "denied")
+		}
 	})
 
 	http.HandleFunc(UpdateCommand, func(w http.ResponseWriter, r *http.Request) {
